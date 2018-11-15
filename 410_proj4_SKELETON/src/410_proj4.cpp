@@ -89,15 +89,6 @@ int main()
 
 	thread waiter1(doWaiter, 1, "in2.txt");
 
-	//TODO your code here
-//	ORDER myOrder1, myOrder2;
-//	myOrder1.number_donuts = 26;
-//	myOrder1.order_number = 1;
-//	myOrder2.number_donuts = 6;
-//	myOrder2.order_number = 2;
-//
-//	order_in_Q.push(myOrder1);
-//	order_in_Q.push(myOrder2);
 
 	thread baker1(doBaker, 1);
 	thread baker2(doBaker, 2);
@@ -105,6 +96,7 @@ int main()
 	waiter1.join();
 	baker1.join();
 	baker2.join();
+	waiter1.join();
 
 	return SUCCESS;
 }
