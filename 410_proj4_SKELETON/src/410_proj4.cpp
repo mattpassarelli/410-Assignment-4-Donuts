@@ -96,7 +96,6 @@ int main()
 	waiter1.join();
 	baker1.join();
 	baker2.join();
-	waiter1.join();
 
 	return SUCCESS;
 }
