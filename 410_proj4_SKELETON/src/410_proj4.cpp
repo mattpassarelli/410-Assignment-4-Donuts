@@ -28,7 +28,7 @@ mutex mutex_order_outQ;
 condition_variable cv_order_inQ;
 
 //when true its time for the baker to quit
-bool b_WaiterIsFinished = false;	
+bool b_WaiterIsFinished = false;
 
 //where orders are stored
 queue<ORDER> order_in_Q;
@@ -75,7 +75,7 @@ void audit_results() {
 		}
 
 		//if one order was screwed up say so
-		if (numDonuts != itOrder->number_donuts) 
+		if (numDonuts != itOrder->number_donuts)
 			PRINT6("ERROR Order", itOrder->order_number, " Expected ", itOrder->number_donuts, " found ", numDonuts);
 	}
 

@@ -45,7 +45,7 @@ void Waiter::beWaiter() {
 //		if (i == 1) {
 //			cv_order_inQ.notify_all();
 //		}
-		cv_order_inQ.notify_one();
+		cv_order_inQ.notify_all();
 
 	}
 	if(Waiter::getNext(myOrder) == NO_ORDERS) {
