@@ -56,25 +56,33 @@ void Baker::beBaker() {
 
 
 	while (true) {
-		unique_lock<mutex> lck(mutex_order_outQ);
+	unique_lock<mutex> lck(mutex_order_outQ);
 
-		cout << "Waiting for Baking to signal" << endl;
+//	cout << "Waiting for Baking to signal" << endl;
 
 		while (order_in_Q.empty()) {
 			cv_order_inQ.wait(lck);
 		}
 
-		cout << "Baker signal received. Starting..." << endl;
+		//cout << "Baker signal received. Starting..." << endl;
+
 
 		if (order_in_Q.size() > 0) {
 			cout << "Starting order..." << endl;
-			bake_and_box(order_in_Q.front());
 
+			mutex_order_inQ.lock();
+			bake_and_box(order_in_Q.front());
+			mutex_order_inQ.unlock();
+
+			mutex_order_outQ.lock();
 			cout << "Pushing Order to vector..." << endl;
 			order_out_Vector.push_back(order_in_Q.front());
+			mutex_order_outQ.unlock();
 
+			mutex_order_inQ.lock();
 			cout << "Removing from IN Q" << endl;
 			order_in_Q.pop();
+			mutex_order_inQ.unlock();
 		}
 
 		if (order_in_Q.empty() && b_WaiterIsFinished) {
