@@ -1,4 +1,5 @@
 #include <mutex>
+#include <thread>
 
 #include "../includes/baker.h"
 #include "../includes/externs.h"
@@ -57,12 +58,12 @@ void Baker::beBaker() {
 
 	unique_lock<mutex> lck(mutex_order_inQ);
 	cv_order_inQ.wait(lck, [] {return !order_in_Q.empty();});;
-//	lck.unlock();
+	lck.unlock();
 
-	while (!order_in_Q.empty()) {
+	if (!order_in_Q.empty()) {
 //
 			mutex_order_outQ.lock();
-			cout << "Starting order..." << endl;
+			cout << "thread" << this_thread::get_id() <<"is starting order..." << endl;
 			bake_and_box(order_in_Q.front());
 //			mutex_order_inQ.unlock();
 //
@@ -77,16 +78,18 @@ void Baker::beBaker() {
 			mutex_order_outQ.unlock();
 	}
 
-	lck.unlock();
+//	lck.unlock();
 
 
-
-		if (order_in_Q.empty()) {
-			unique_lock<mutex> lck(mutex_order_inQ);
+		if (order_in_Q.empty() && b_WaiterIsFinished) {
+//			unique_lock<mutex> lck(mutex_order_inQ);
 			cout<<"Breaking from beBaker"<<endl;
-			cv_order_inQ.wait(lck, [] {return b_WaiterIsFinished;});;
-			lck.unlock();
+//			cv_order_inQ.wait(lck, [] {return b_WaiterIsFinished;});;
+//			lck.unlock();
 			return;
+		}
+		else if(!order_in_Q.empty() && !b_WaiterIsFinished) {
+			beBaker();
 		}
 //
 //		//TODO remove this for "production"
