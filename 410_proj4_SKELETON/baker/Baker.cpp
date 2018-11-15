@@ -52,47 +52,47 @@ void Baker::bake_and_box(ORDER &anOrder) {
 
 void Baker::beBaker() {
 
-	//TODO uncomment those comment blocks for "production"
 
 
-	while (true) {
-//	unique_lock<mutex> lck(mutex_order_outQ);
 
-//	cout << "Waiting for Baking to signal" << endl;
+	unique_lock<mutex> lck(mutex_order_inQ);
+	cv_order_inQ.wait(lck, [] {return !order_in_Q.empty();});;
+//	lck.unlock();
 
-//		while (order_in_Q.empty()) {
-//			cv_order_inQ.wait(lck);
-//		}
-
-
-		if (order_in_Q.size() > 0) {
-
-
-			mutex_order_inQ.lock();
+	while (!order_in_Q.empty()) {
+//
+			mutex_order_outQ.lock();
 			cout << "Starting order..." << endl;
 			bake_and_box(order_in_Q.front());
-			mutex_order_inQ.unlock();
-
-			mutex_order_outQ.lock();
+//			mutex_order_inQ.unlock();
+//
+//			mutex_order_outQ.lock();
 			cout << "Pushing Order to vector..." << endl;
 			order_out_Vector.push_back(order_in_Q.front());
-			mutex_order_outQ.unlock();
-
-			mutex_order_inQ.lock();
+//			mutex_order_outQ.unlock();
+//
+//			mutex_order_inQ.lock();
 			cout << "Removing from IN Q" << endl;
 			order_in_Q.pop();
-			mutex_order_inQ.unlock();
-		}
-
-		if (order_in_Q.empty() && b_WaiterIsFinished) {
-			cout<<"Breaking from beBaker"<<endl;
-			break;
-		}
-
-		//TODO remove this for "production"
-//		if (order_in_Q.empty()) {
-//			cout << "Breaking from beBaker..." << endl;
-//			break;
-//		}
+			mutex_order_outQ.unlock();
 	}
+
+	lck.unlock();
+
+
+
+		if (order_in_Q.empty()) {
+			unique_lock<mutex> lck(mutex_order_inQ);
+			cout<<"Breaking from beBaker"<<endl;
+			cv_order_inQ.wait(lck, [] {return b_WaiterIsFinished;});;
+			lck.unlock();
+			return;
+		}
+//
+//		//TODO remove this for "production"
+////		if (order_in_Q.empty()) {
+////			cout << "Breaking from beBaker..." << endl;
+////			break;
+////		}
+//	}
 }

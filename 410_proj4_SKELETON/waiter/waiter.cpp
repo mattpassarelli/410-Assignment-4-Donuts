@@ -9,6 +9,7 @@
 
 using namespace std;
 ORDER myOrder;
+bool qNotEmpty = false;
 
 Waiter::Waiter(int id,std::string filename):id(id),myIO(filename){
 }
@@ -37,13 +38,19 @@ void Waiter::beWaiter() {
 		i++;
 		cout<<"Pushing order to Q..."<<endl;
 		order_in_Q.push(myOrder);
-		if(!order_in_Q.empty()) {
+//		if(!order_in_Q.empty()) {
+//			std::lock_guard<std::mutex> lk(mutex_order_inQ);
+//
+//		}
+		if (i == 1) {
 			cv_order_inQ.notify_all();
 		}
+
 	}
 	if(Waiter::getNext(myOrder) == NO_ORDERS) {
+		std::lock_guard<std::mutex> lk (mutex_order_inQ);
 		b_WaiterIsFinished = true;
-		//cv_order_inQ.notify_all();
+		cv_order_inQ.notify_all();
 	}
 	cout<<"Breaking beWaiter..."<<endl;
 }
