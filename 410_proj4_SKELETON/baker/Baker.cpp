@@ -64,13 +64,14 @@ void Baker::beBaker() {
 //			cv_order_inQ.wait(lck);
 //		}
 
-		cout << "Baker signal received. Starting..." << endl;
+//		cout << "Baker signal received. Starting..." << endl;
 
 
 		if (order_in_Q.size() > 0) {
-			cout << "Starting order..." << endl;
+
 
 			mutex_order_inQ.lock();
+			cout << "Starting order..." << endl;
 			bake_and_box(order_in_Q.front());
 			mutex_order_inQ.unlock();
 

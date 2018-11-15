@@ -87,7 +87,7 @@ void audit_results() {
 int main()
 {
 
-	thread waiter1(doWaiter, 1, "in1.txt");
+	thread waiter1(doWaiter, 1, "in2.txt");
 
 	//TODO your code here
 //	ORDER myOrder1, myOrder2;
@@ -102,6 +102,7 @@ int main()
 	thread baker1(doBaker, 1);
 	thread baker2(doBaker, 2);
 
+	waiter1.join();
 	baker1.join();
 	baker2.join();
 
