@@ -60,9 +60,9 @@ void Baker::beBaker() {
 
 		cout << "Waiting for Baking to signal" << endl;
 
-//		while (!b_WaiterIsFinished) {
-//			cv_order_inQ.wait(lck);
-//		}
+		while (order_in_Q.empty()) {
+			cv_order_inQ.wait(lck);
+		}
 
 		cout << "Baker signal received. Starting..." << endl;
 
@@ -77,15 +77,15 @@ void Baker::beBaker() {
 			order_in_Q.pop();
 		}
 
-//		if (order_in_Q.empty() && b_WaiterIsFinished) {
-//			cout<<"Breaking from beBaker"<<endl;
-//			break;
-//		}
-
-		//TODO remove this for "production"
-		if (order_in_Q.empty()) {
-			cout << "Breaking from beBaker..." << endl;
+		if (order_in_Q.empty() && b_WaiterIsFinished) {
+			cout<<"Breaking from beBaker"<<endl;
 			break;
 		}
+
+		//TODO remove this for "production"
+//		if (order_in_Q.empty()) {
+//			cout << "Breaking from beBaker..." << endl;
+//			break;
+//		}
 	}
 }
