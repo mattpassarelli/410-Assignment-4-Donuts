@@ -92,11 +92,11 @@ int main()
 	thread baker2(doBaker, 2);
 
 
+	baker1.join();
+	baker2.join();
 
 	waiter1.join();
 
-	baker1.join();
-	baker2.join();
 
 	audit_results();
 

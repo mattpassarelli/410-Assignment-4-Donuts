@@ -53,42 +53,79 @@ void Baker::bake_and_box(ORDER &anOrder) {
 
 void Baker::beBaker() {
 
-	while (!b_WaiterIsFinished) {
-		unique_lock<mutex> lck(mutex_order_inQ);
 
-		while (order_in_Q.empty() && !b_WaiterIsFinished) {
-			cv_order_inQ.wait(lck);
-		}
+
+
+	cout << "thread" << this_thread::get_id() << "is starting order..."
+					<< endl;
+
+	while (!b_WaiterIsFinished || !order_in_Q.empty()) {
+
+
+		unique_lock<mutex> lck(mutex_order_inQ);
+		cv_order_inQ.wait(lck);
 
 		if (!order_in_Q.empty()) {
-			//mutex_order_outQ.lock();
-			cout << "thread" << this_thread::get_id() << "is starting order..."
-					<< endl;
+
+			mutex_order_outQ.lock();
+
 			bake_and_box(order_in_Q.front());
-			//			mutex_order_inQ.unlock();
+			mutex_order_outQ.unlock();
 			//
-			//			mutex_order_outQ.lock();
-			cout << "Pushing Order to vector..." << endl;
+			mutex_order_outQ.lock();
+			cout << this_thread::get_id() << " Pushing Order to vector..." << endl;
 			order_out_Vector.push_back(order_in_Q.front());
-			//			mutex_order_outQ.unlock();
+			mutex_order_outQ.unlock();
 			//
-			//			mutex_order_inQ.lock();
+			mutex_order_outQ.lock();
 			cout << "Removing from IN Q" << endl;
 			order_in_Q.pop();
+			mutex_order_outQ.unlock();
 
-			lck.unlock();
-			cv_order_inQ.notify_all();
 		}
 	}
 
-	if (order_in_Q.empty() && b_WaiterIsFinished) {
-	//			unique_lock<mutex> lck(mutex_order_inQ);
-				cout<<"Breaking from beBaker"<<endl;
-
-	//			cv_order_inQ.wait(lck, [] {return b_WaiterIsFinished;});;
-	//			lck.unlock();
-				return;
-	}
+//	while (true) {
+//		unique_lock<mutex> lck(mutex_order_inQ);
+//
+//		while (order_in_Q.empty() && !b_WaiterIsFinished) {
+//			cv_order_inQ.wait(lck);
+//		}
+//
+//		if (!order_in_Q.empty()) {
+//			//mutex_order_outQ.lock();
+//			cout << "thread" << this_thread::get_id() << "is starting order..."
+//					<< endl;
+//			bake_and_box(order_in_Q.front());
+//			//			mutex_order_inQ.unlock();
+//			//
+//			//			mutex_order_outQ.lock();
+//			cout << "Pushing Order to vector..." << endl;
+//			order_out_Vector.push_back(order_in_Q.front());
+//			//			mutex_order_outQ.unlock();
+//			//
+//			//			mutex_order_inQ.lock();
+//			cout << "Removing from IN Q" << endl;
+//			order_in_Q.pop();
+//
+//			//lck.unlock();
+//			cv_order_inQ.notify_all();
+//		}
+//
+//		if(order_in_Q.empty())
+//		{
+//			break;
+//		}
+//	}
+//
+//	if (order_in_Q.empty() && b_WaiterIsFinished) {
+//	//			unique_lock<mutex> lck(mutex_order_inQ);
+//				cout<<"Breaking from beBaker"<<endl;
+//
+//	//			cv_order_inQ.wait(lck, [] {return b_WaiterIsFinished;});;
+//	//			lck.unlock();
+//				return;
+}
 
 //	unique_lock<mutex> lck(mutex_order_inQ);
 //	cv_order_inQ.wait(lck, [] {return !order_in_Q.empty();});;
@@ -132,4 +169,4 @@ void Baker::beBaker() {
 ////			break;
 ////		}
 //	}
-}
+
