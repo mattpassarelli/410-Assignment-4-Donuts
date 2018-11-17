@@ -1,3 +1,7 @@
+//Baker.cpp Done Mostly by Matt Passarelli
+//Matt: 90%
+//Same: 10%
+
 #include <mutex>
 #include <thread>
 
@@ -20,162 +24,101 @@ Baker::~Baker() {
 //1 with 12 donuts, 1 with 1 donut
 void Baker::bake_and_box(ORDER &anOrder) {
 
-	//TODO remove cout functions
-
+	/**
+	 * Objects that are used for the ORDERS that are
+	 * being fulfilled.
+	 * Using GLAZED as opposed to anything else since
+	 * that's what we're told to use in externs.h
+	 */
 	Box box;
 	DONUT donut;
 	donut.myType = GLAZED;
 
+	/**
+	 * Iterate through the ORDER's specificed number of dounts
+	 * stopping at DOZEN to push the box to the order, then
+	 * continues if there are still donuts. Once we reach the
+	 * last donut in the ORDER, finish that box and push it.
+	 */
 	for (int i = 0; i < anOrder.number_donuts; i++) {
 		if (box.size() < DOZEN) {
 			box.addDonut(donut);
-			cout << "Adding Donut. Box has " << box.size()
-					<< " donuts out of a total of " << anOrder.number_donuts
-					<< " donuts." << endl;
 		}
 		if (box.size() == DOZEN) {
-			cout << "Box has " << box.size()
-					<< " donuts. Should have DOZEN. Pushing... " << endl;
 			anOrder.boxes.push_back(box);
 			box.clear();
-			cout << "Cleaning box. Now has " << box.size()
-					<< " donuts. Should have 0" << endl;
 		}
 		if (box.size() > 0 && i == anOrder.number_donuts - 1) {
-			cout << "Box has " << box.size() << " donut. Pushing... " << endl;
 			anOrder.boxes.push_back(box);
 		}
 	}
-
-	cout << "we have " << anOrder.boxes.size() << " boxes. We should have "
-			<< (anOrder.number_donuts / 12) + 1 << " boxes." << endl;
 }
 
 void Baker::beBaker() {
 
+	/**
+	 * Here we wait until Waiter signifies or until the
+	 * order_in_Q is empty
+	 */
+	while (!b_WaiterIsFinished || !order_in_Q.empty()) {
 
-
-
-	cout << "Baker " << this->id << "is starting order..."
-					<< endl;
-
-//	while (!b_WaiterIsFinished) {
-//	}
-
-	while(!b_WaiterIsFinished || !order_in_Q.empty()){
+		//lock the mutex with a unique lock
 		unique_lock<mutex> lck(mutex_order_inQ);
 
+		//here we wait for the condition variables to be signaled
+		//to continues
 		while (!b_WaiterIsFinished && !order_in_Q.empty())
 			cv_order_inQ.wait(lck);
 
 		if (!order_in_Q.empty()) {
 
-			//mutex_order_outQ.lock();
-
+			//do the ORDER
 			bake_and_box(order_in_Q.front());
-			//mutex_order_outQ.unlock();
-			//
-			mutex_order_outQ.lock();
-			cout << "Baker " << this->id << " Pushing Order to vector..." << endl;
-			order_out_Vector.push_back(order_in_Q.front());
-			mutex_order_outQ.unlock();
-			//
-//			mutex_order_outQ.lock();
-			cout << "Removing from IN Q" << endl;
-			order_in_Q.pop();
-//			mutex_order_outQ.unlock();
 
+			/**
+			 * Lock the order out mutex so we can push to the final
+			 * Order out Vector
+			 * Then unlock
+			 */
+			mutex_order_outQ.lock();
+
+			order_out_Vector.push_back(order_in_Q.front());
+
+			mutex_order_outQ.unlock();
+
+			//Remove the ORDER we just did from the Queue
+			order_in_Q.pop();
+
+			//unlock the unique lock so other threads can grab
+			//then notifity
 			lck.unlock();
 			cv_order_inQ.notify_all();
+
+			/**----------------------------------------------------
+			 * Okay, let me rant about this method right here
+			 *
+			 * It took days to figure out why, after no matter
+			 * what we tried, only one thread would do all of
+			 * the work, despite having multiple threads
+			 * running. Turns out, that, at the very least, my
+			 * processor is too fast (it's like 3.2-3.5GHz or so)
+			 * and that as soon as one thread unlocks to allow
+			 * another thread to grab the mutex, the one that just
+			 * unlocked itself grabs it again, and again, and again,
+			 * until the operations are finished. It's so fucking
+			 * weird and I have no idea why.
+			 *
+			 * So, by making the thread that's running wait, even,
+			 * just 1 damn nanosecond, it's long enough for another
+			 * thread to grab the mutex so someone else can do the
+			 * work. Once the current thread waits, it's honestly
+			 * just luck on what other thread grabs it, but at
+			 * least this makes it so the same thread doesn't
+			 * grab the mutex like a greedy little snake.
+			 * ----------------------------------------------------
+			 */
 			this_thread::sleep_for(chrono::nanoseconds(1));
 		}
 	}
-
-	unique_lock<mutex> lck(mutex_order_inQ);
-	cout << "Baker " << this->id << " Exiting..." << endl;
-
-//	while (true) {
-//		unique_lock<mutex> lck(mutex_order_inQ);
-//
-//		while (order_in_Q.empty() && !b_WaiterIsFinished) {
-//			cv_order_inQ.wait(lck);
-//		}
-//
-//		if (!order_in_Q.empty()) {
-//			//mutex_order_outQ.lock();
-//			cout << "thread" << this_thread::get_id() << "is starting order..."
-//					<< endl;
-//			bake_and_box(order_in_Q.front());
-//			//			mutex_order_inQ.unlock();
-//			//
-//			//			mutex_order_outQ.lock();
-//			cout << "Pushing Order to vector..." << endl;
-//			order_out_Vector.push_back(order_in_Q.front());
-//			//			mutex_order_outQ.unlock();
-//			//
-//			//			mutex_order_inQ.lock();
-//			cout << "Removing from IN Q" << endl;
-//			order_in_Q.pop();
-//
-//			//lck.unlock();
-//			cv_order_inQ.notify_all();
-//		}
-//
-//		if(order_in_Q.empty())
-//		{
-//			break;
-//		}
-//	}
-//
-//	if (order_in_Q.empty() && b_WaiterIsFinished) {
-//	//			unique_lock<mutex> lck(mutex_order_inQ);
-//				cout<<"Breaking from beBaker"<<endl;
-//
-//	//			cv_order_inQ.wait(lck, [] {return b_WaiterIsFinished;});;
-//	//			lck.unlock();
-//				return;
 }
-
-//	unique_lock<mutex> lck(mutex_order_inQ);
-//	cv_order_inQ.wait(lck, [] {return !order_in_Q.empty();});;
-//
-//	while (!order_in_Q.empty()) {
-////
-//			mutex_order_outQ.lock();
-//			cout << "thread" << this_thread::get_id() <<"is starting order..." << endl;
-//			bake_and_box(order_in_Q.front());
-////			mutex_order_inQ.unlock();
-////
-////			mutex_order_outQ.lock();
-//			cout << "Pushing Order to vector..." << endl;
-//			order_out_Vector.push_back(order_in_Q.front());
-////			mutex_order_outQ.unlock();
-////
-////			mutex_order_inQ.lock();
-//			cout << "Removing from IN Q" << endl;
-//			order_in_Q.pop();
-//			mutex_order_outQ.unlock();
-//	}
-//
-////	lck.unlock();
-//
-//
-//		if (order_in_Q.empty() && b_WaiterIsFinished) {
-////			unique_lock<mutex> lck(mutex_order_inQ);
-//			cout<<"Breaking from beBaker"<<endl;
-//			lck.unlock();
-////			cv_order_inQ.wait(lck, [] {return b_WaiterIsFinished;});;
-////			lck.unlock();
-//			return;
-//		}
-//		else if(!order_in_Q.empty() && !b_WaiterIsFinished) {
-//			beBaker();
-//		}
-//
-//		//TODO remove this for "production"
-////		if (order_in_Q.empty()) {
-////			cout << "Breaking from beBaker..." << endl;
-////			break;
-////		}
-//	}
 

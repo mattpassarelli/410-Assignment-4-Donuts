@@ -12,6 +12,8 @@
 #include "../includes/baker.h"
 #include "../includes/datastructs.h"
 #include "../includes/PRINT.h"
+#include "../includes/logger.h"
+
 
 using namespace std;
 
@@ -84,15 +86,26 @@ void audit_results() {
 	PRINT2("Total orders filled = ", total_orders);
 }
 
+void logger(string str)
+{
+	Logger log;
+
+	log.log(str);
+}
+
 int main()
 {
+
+
+
 	thread waiter1(doWaiter, 1, "in2.txt");
 	//doWaiter(1, "in2.txt");
 	thread baker1(doBaker, 1);
 	thread baker2(doBaker, 2);
 	thread baker3(doBaker, 3);
 	thread baker4(doBaker, 4);
-
+	thread log1(logger, "PRINTing thing 1...");
+	thread log2(logger, "Printing thing 2...");
 
 
 	baker1.join();
@@ -102,6 +115,10 @@ int main()
 
 	waiter1.join();
 
+	log1.join();
+	log2.join();
+
+	logger("all done");
 
 	audit_results();
 
