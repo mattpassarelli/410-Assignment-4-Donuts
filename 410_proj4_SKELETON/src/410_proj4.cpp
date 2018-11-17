@@ -90,10 +90,15 @@ int main()
 	//doWaiter(1, "in2.txt");
 	thread baker1(doBaker, 1);
 	thread baker2(doBaker, 2);
+	thread baker3(doBaker, 3);
+	thread baker4(doBaker, 4);
+
 
 
 	baker1.join();
 	baker2.join();
+	baker3.join();
+	baker4.join();
 
 	waiter1.join();
 

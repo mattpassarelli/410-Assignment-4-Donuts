@@ -33,20 +33,28 @@ int Waiter::getNext(ORDER &anOrder) {
 void Waiter::beWaiter() {
 
 	while (Waiter::getNext(myOrder) == SUCCESS) {
+		{
+		unique_lock<mutex> lck(mutex_order_inQ);
 		cout << "Pushing order to Q..." << endl;
 
-		mutex_order_outQ.lock();
+		//mutex_order_outQ.lock();
 		order_in_Q.push(myOrder);
-		mutex_order_outQ.unlock();
-
+		//mutex_order_outQ.unlock();
+		}
 		cv_order_inQ.notify_all();
 
 	}
-	if (Waiter::getNext(myOrder) == NO_ORDERS) {
+	//if (Waiter::getNext(myOrder) == NO_ORDERS) {
 		//std::lock_guard<std::mutex> lk(mutex_order_inQ);
+
+	//while(!order_in_Q.empty()){}
+	{
+		unique_lock<mutex> lck(mutex_order_inQ);
 		b_WaiterIsFinished = true;
-		cv_order_inQ.notify_all();
 	}
+	//
+	cv_order_inQ.notify_all();
+
 	cout << "Breaking beWaiter..." << endl;
 }
 

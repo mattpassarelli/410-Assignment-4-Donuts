@@ -56,34 +56,43 @@ void Baker::beBaker() {
 
 
 
-	cout << "thread" << this_thread::get_id() << "is starting order..."
+	cout << "Baker " << this->id << "is starting order..."
 					<< endl;
 
-	while (!b_WaiterIsFinished || !order_in_Q.empty()) {
+//	while (!b_WaiterIsFinished) {
+//	}
 
-
+	while(!b_WaiterIsFinished || !order_in_Q.empty()){
 		unique_lock<mutex> lck(mutex_order_inQ);
-		cv_order_inQ.wait(lck);
+
+		while (!b_WaiterIsFinished && !order_in_Q.empty())
+			cv_order_inQ.wait(lck);
 
 		if (!order_in_Q.empty()) {
 
-			mutex_order_outQ.lock();
+			//mutex_order_outQ.lock();
 
 			bake_and_box(order_in_Q.front());
-			mutex_order_outQ.unlock();
+			//mutex_order_outQ.unlock();
 			//
 			mutex_order_outQ.lock();
-			cout << this_thread::get_id() << " Pushing Order to vector..." << endl;
+			cout << "Baker " << this->id << " Pushing Order to vector..." << endl;
 			order_out_Vector.push_back(order_in_Q.front());
 			mutex_order_outQ.unlock();
 			//
-			mutex_order_outQ.lock();
+//			mutex_order_outQ.lock();
 			cout << "Removing from IN Q" << endl;
 			order_in_Q.pop();
-			mutex_order_outQ.unlock();
+//			mutex_order_outQ.unlock();
 
+			lck.unlock();
+			cv_order_inQ.notify_all();
+			this_thread::sleep_for(chrono::nanoseconds(1));
 		}
 	}
+
+	unique_lock<mutex> lck(mutex_order_inQ);
+	cout << "Baker " << this->id << " Exiting..." << endl;
 
 //	while (true) {
 //		unique_lock<mutex> lck(mutex_order_inQ);
